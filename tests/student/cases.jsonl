@@ -1,0 +1,16 @@
+{"task":"lcs","a":"","b":"abc"}
+{"task":"lcs","a":"ab","b":"ba"}
+{"task":"merge","sizes":[]}
+{"task":"merge","sizes":[0,0,0]}
+{"task":"merge","sizes":[1000000000,1000000000,1000000000,1000000000]}
+{"task":"tree","n":3,"weights":[-1,-2,-3],"edges":[[0,1],[1,2]]}
+{"task":"tree","n":0,"weights":[],"edges":[]}
+{"task":"naive","text":"abc","pattern":""}
+{"task":"kmp","text":"aaaa","pattern":"aa"}
+{"task":"rk","text":"abdj","pattern":"dj"}
+{"task":"rk","text":"Ab, ab!","pattern":"ab"}
+{"task":"suffix","text":"aaaa"}
+{"task":"suffix","text":"abc"}
+{"task":"aho","patterns":["a","aa","a"],"texts":["aaa",""]}
+{"task":"aho","patterns":[],"texts":["x","y"]}
+{"task":"aho","patterns":["x"],"texts":[]}

@@ -1,5 +1,4 @@
 import java.util.*;
-/** Implement these algorithms. docs/guide/CONTRACTS.md defines each field and limit. */
 public final class Algorithms {
 
     private static String str(Map<String,Object> input, String key) {
@@ -15,9 +14,6 @@ public final class Algorithms {
 
     private static Map<String,Object> result() { return new LinkedHashMap<>(); }
 
-    /* ------------------------------------------------------------------ */
-    /* Part 1: LCS — prefix DP, dp[i][j] = LCS length of a[0..i) and b[0..j) */
-    /* ------------------------------------------------------------------ */
     static Map<String,Object> lcs(Map<String,Object> input) {
         String a = str(input, "a"), b = str(input, "b");
         int n = a.length(), m = b.length();
@@ -33,7 +29,6 @@ public final class Algorithms {
                 else dp[row + j] = Math.max(dp[prev + j], dp[row + j - 1]);
             }
         }
-        // Reconstruct backwards from (n, m).
         char[] seq = new char[dp[n * w + m]];
         int k = seq.length, i = n, j = m;
         while (i > 0 && j > 0) {
@@ -46,10 +41,6 @@ public final class Algorithms {
         return out;
     }
 
-    /* ------------------------------------------------------------------ */
-    /* Part 2: ordered adjacent-block merging — interval DP                */
-    /* cost[l][r] = min over k of cost[l][k] + cost[k+1][r] + sum(l..r)    */
-    /* ------------------------------------------------------------------ */
     static Map<String,Object> merge(Map<String,Object> input) {
         List<Object> raw = list(input, "sizes");
         int n = raw.size();
@@ -72,7 +63,6 @@ public final class Algorithms {
                 split[l][r] = bk;
             }
         }
-        // Postorder (children before parent) without recursion.
         Deque<int[]> stack = new ArrayDeque<>();
         stack.push(new int[]{0, n - 1, 0});
         while (!stack.isEmpty()) {
@@ -89,9 +79,6 @@ public final class Algorithms {
         return out;
     }
 
-    /* ------------------------------------------------------------------ */
-    /* Part 3: maximum-weight independent set on a tree — take/skip DP     */
-    /* ------------------------------------------------------------------ */
     static Map<String,Object> tree(Map<String,Object> input) {
         List<Object> ws = list(input, "weights");
         List<Object> es = list(input, "edges");
@@ -100,7 +87,6 @@ public final class Algorithms {
         if (n == 0) { out.put("weight", 0L); out.put("selected", new int[0]); return out; }
         long[] w = new long[n];
         for (int i = 0; i < n; i++) w[i] = ((Number) ws.get(i)).longValue();
-        // Adjacency as linked lists in arrays.
         int[] head = new int[n], next = new int[2 * es.size()], to = new int[2 * es.size()];
         Arrays.fill(head, -1);
         int ec = 0;
@@ -110,7 +96,6 @@ public final class Algorithms {
             to[ec] = v; next[ec] = head[u]; head[u] = ec++;
             to[ec] = u; next[ec] = head[v]; head[v] = ec++;
         }
-        // BFS order from root 0; reverse BFS order is a valid postorder.
         int[] order = new int[n], parent = new int[n];
         boolean[] seen = new boolean[n];
         int qh = 0, qt = 0;
@@ -132,7 +117,6 @@ public final class Algorithms {
                 skip[p] += Math.max(take[v], skip[v]);
             }
         }
-        // Top-down reconstruction: a vertex may be taken only if its parent is not.
         boolean[] chosen = new boolean[n];
         int cnt = 0;
         for (int idx = 0; idx < qt; idx++) {
@@ -148,9 +132,6 @@ public final class Algorithms {
         return out;
     }
 
-    /* ------------------------------------------------------------------ */
-    /* Part 4: exact single-pattern search                                 */
-    /* ------------------------------------------------------------------ */
     private static Map<String,Object> positions(int[] buf, int z) {
         Map<String,Object> out = result();
         out.put("positions", Arrays.copyOf(buf, z));
@@ -180,7 +161,6 @@ public final class Algorithms {
         return positions(buf, z);
     }
 
-    /** pi[i] = length of the longest proper border of p[0..i]. */
     static int[] prefixFunction(String p) {
         int m = p.length();
         int[] pi = new int[m];
@@ -217,7 +197,7 @@ public final class Algorithms {
         int n = t.length(), m = p.length();
         if (m == 0) return allBoundaries(n);
         if (m > n) return positions(new int[0], 0);
-        long high = 1; // BASE^(m-1) mod MOD, weight of the leftmost character
+        long high = 1;
         for (int i = 1; i < m; i++) high = high * RK_BASE % RK_MOD;
         long hp = 0, ht = 0;
         for (int i = 0; i < m; i++) {
@@ -227,29 +207,25 @@ public final class Algorithms {
         int[] buf = new int[n - m + 1];
         int z = 0;
         for (int s = 0; ; s++) {
-            if (ht == hp) { // candidate only: verify characters
+            if (ht == hp) {
                 int j = 0;
                 while (j < m && t.charAt(s + j) == p.charAt(j)) j++;
                 if (j == m) buf[z++] = s;
             }
             if (s + m >= n) break;
             ht = (ht - t.charAt(s) * high) % RK_MOD;
-            if (ht < 0) ht += RK_MOD; // normalize negative remainder
+            if (ht < 0) ht += RK_MOD;
             ht = (ht * RK_BASE + t.charAt(s + m)) % RK_MOD;
         }
         return positions(buf, z);
     }
 
-    /* ------------------------------------------------------------------ */
-    /* Part 5: suffix array (prefix doubling) + Kasai LCP                  */
-    /* ------------------------------------------------------------------ */
     static int[] suffixArray(String t) {
         int n = t.length();
         int[] sa = new int[n], rank = new int[n], tmp = new int[n];
-        for (int i = 0; i < n; i++) rank[i] = t.charAt(i); // 32..126
+        for (int i = 0; i < n; i++) rank[i] = t.charAt(i);
         long[] keys = new long[n];
         for (int k = 1; ; k <<= 1) {
-            // key = (rank[i]+1, rank[i+k]+1 or 0 if past end), packed with index i.
             for (int i = 0; i < n; i++) {
                 long r1 = rank[i] + 1L, r2 = i + k < n ? rank[i + k] + 1L : 0L;
                 keys[i] = (r1 << 40) | (r2 << 20) | i;
@@ -260,13 +236,12 @@ public final class Algorithms {
             for (int i = 1; i < n; i++)
                 tmp[sa[i]] = tmp[sa[i - 1]] + ((keys[i] >>> 20) != (keys[i - 1] >>> 20) ? 1 : 0);
             System.arraycopy(tmp, 0, rank, 0, n);
-            if (rank[sa[n - 1]] == n - 1) break; // all ranks distinct
+            if (rank[sa[n - 1]] == n - 1) break;
             if (k >= n) break;
         }
         return sa;
     }
 
-    /** Kasai: lcp[i] = LCP(suffix sa[i-1], suffix sa[i]), lcp[0] = 0. */
     static int[] kasai(String t, int[] sa) {
         int n = t.length();
         int[] rank = new int[n], lcp = new int[n];
@@ -298,9 +273,6 @@ public final class Algorithms {
         return out;
     }
 
-    /* ------------------------------------------------------------------ */
-    /* Part 6: Aho–Corasick with reverse-failure visit propagation         */
-    /* ------------------------------------------------------------------ */
     static final int SIGMA = 95, LOW = 32;
 
     private static int code(char c) {
@@ -330,9 +302,8 @@ public final class Algorithms {
                 if (go[v * SIGMA + c] == -1) go[v * SIGMA + c] = states++;
                 v = go[v * SIGMA + c];
             }
-            term[i] = v; // duplicates share one terminal state
+            term[i] = v;
         }
-        // BFS: failure links and complete goto automaton.
         int[] fail = new int[states], bfs = new int[states];
         int qh = 0, qt = 0;
         for (int c = 0; c < SIGMA; c++) {
@@ -359,7 +330,6 @@ public final class Algorithms {
                 v = c < 0 ? 0 : go[v * SIGMA + c];
                 visits[v]++;
             }
-            // Deepest states first: push visit counts to failure (suffix) states.
             for (int i = qt - 1; i >= 0; i--) {
                 int u = bfs[i];
                 visits[fail[u]] += visits[u];
